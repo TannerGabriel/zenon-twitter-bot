@@ -37,8 +37,8 @@ func GetClient(auth TwitterAuth) (*twitter.Client, error) {
 
 // Tweet is used create a Twitter tweet with the passed message
 func Tweet(client twitter.Client, message string) error {
-	_, resp, err := client.Statuses.Update(message, nil)
-	if err != nil || resp.Status != "200" {
+	_, _, err := client.Statuses.Update(message, nil)
+	if err != nil {
 		log.Printf("error when tweeting: %e", err)
 		return err
 	}
