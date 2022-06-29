@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/twitter"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/zenon"
 	"github.com/joho/godotenv"
@@ -38,15 +38,26 @@ func main() {
 
 	// Read the data from the subscription
 	for {
-		//  Read envelope with address
-		address, _ := subscriber.Recv(0)
 		//  Read message contents
-		contents, _ := subscriber.Recv(0)
-		fmt.Printf("[%s] %s\n", address, contents)
+		content, _ := subscriber.Recv(0)
+		log.Println(content)
 
-		// TODO: Process messages
-		if contents != "" {
+		data := &zenon.Event{}
+		err := json.Unmarshal([]byte(content), data)
+		if err != nil {
+			log.Println("No supported Zenon event. Skipping message!")
+			log.Println("Error: ", err)
+			continue
+		}
 
+		log.Println(data)
+
+		if data.MessageType == "project:new" {
+			// TODO: Handle new project
+			log.Println("Handling new project")
+		} else if data.MessageType == "phase:status-update" {
+			// TODO: Handle phase updated
+			log.Println("Handling phase status update")
 		}
 	}
 }
