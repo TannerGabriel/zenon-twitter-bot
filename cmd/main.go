@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/twitter"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/zenon"
 	"github.com/joho/godotenv"
@@ -53,8 +54,24 @@ func main() {
 		log.Println(data)
 
 		if data.MessageType == "project:new" {
-			// TODO: Handle new project
 			log.Println("Handling new project")
+			newProject := &zenon.NewProject{}
+			err := json.Unmarshal([]byte(content), newProject)
+			if err != nil {
+				log.Println("Could not cast content to project:new event")
+				continue
+			}
+
+			tweetMessage := fmt.Sprintf(`New A-Z project: %s
+								
+								Requested funds:
+								%f ZNN %f QSR
+
+								%s`,
+				newProject.Data.Name, newProject.Data.Znn, newProject.Data.Qsr, newProject.Data.Url,
+			)
+
+			twitter.Tweet(*twitterClient, tweetMessage)
 		} else if data.MessageType == "phase:status-update" {
 			// TODO: Handle phase updated
 			log.Println("Handling phase status update")
