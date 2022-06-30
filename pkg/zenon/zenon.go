@@ -2,6 +2,9 @@ package zenon
 
 import (
 	zmq "github.com/pebbe/zmq4"
+	"github.com/zenon-network/go-zenon/common/types"
+	"github.com/zenon-wiki/go-zdk/client"
+	"github.com/zenon-wiki/go-zdk/zdk"
 	"log"
 )
 
@@ -37,11 +40,11 @@ type NewProject struct {
 }
 
 type ProjectStatusUpdated struct {
-	MessageType string `json:"type"`
-	Id          string `json:"id"`
-	Pid         string `json:"pid"`
-	OldStatus   int    `json:"old"`
-	NewStatus   int    `json:"new"`
+	MessageType string     `json:"type"`
+	Id          string     `json:"id"`
+	Pid         types.Hash `json:"pid"`
+	OldStatus   int        `json:"old"`
+	NewStatus   int        `json:"new"`
 }
 
 // CreateZmqClient creates a Zmq SUB and subscribes to the filtered topics
@@ -63,4 +66,13 @@ func CreateZmqClient(url string, filter string) (*zmq.Socket, error) {
 	}
 
 	return subscriber, nil
+}
+
+func CreateZenonZdk(url string) *zdk.Zdk {
+	rpc, err := client.NewClient(url)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	return zdk.NewZdk(rpc)
 }

@@ -29,7 +29,7 @@ func main() {
 		log.Fatalf("Error creating twitter client: %e", err)
 	}
 
-	log.Println(twitterClient)
+	zenonClient := zenon.CreateZenonZdk(os.Getenv("ZENON_URL"))
 
 	subscriber, err := zenon.CreateZmqClient(os.Getenv("ZMQ_URL"), "")
 	defer subscriber.Close()
@@ -73,8 +73,31 @@ func main() {
 
 			twitter.Tweet(*twitterClient, tweetMessage)
 		} else if data.MessageType == "phase:status-update" {
-			// TODO: Handle phase updated
 			log.Println("Handling phase status update")
+
+			statusUpdate := &zenon.ProjectStatusUpdated{}
+			err := json.Unmarshal([]byte(content), statusUpdate)
+
+			if err != nil {
+				log.Println("Could not cast content to project:new event")
+				continue
+			}
+
+			project, err := zenonClient.Embedded.Accelerator.GetProjectById(statusUpdate.Pid)
+			if err != nil {
+				log.Println("Error while fetching project: ", err)
+			}
+
+			tweetMessage := fmt.Sprintf(`Project has been accepted: %s
+								
+								Votes:
+								Yes %d, No %d
+
+								%s`,
+				project.Name, project.Votes.Yes, project.Votes.No, project.Url,
+			)
+
+			twitter.Tweet(*twitterClient, tweetMessage)
 		}
 	}
 }
