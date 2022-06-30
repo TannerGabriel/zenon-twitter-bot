@@ -24,13 +24,11 @@ func main() {
 	}
 
 	twitterClient, err := twitter.GetClient(auth)
-
 	if err != nil {
 		log.Fatalf("Error creating twitter client: %e", err)
 	}
 
 	zenonClient := zenon.CreateZenonZdk(os.Getenv("ZENON_URL"))
-
 	subscriber, err := zenon.CreateZmqClient(os.Getenv("ZMQ_URL"), "")
 	defer subscriber.Close()
 	if err != nil {
@@ -41,23 +39,18 @@ func main() {
 	for {
 		//  Read message contents
 		content, _ := subscriber.Recv(0)
-		log.Println(content)
 
 		data := &zenon.Event{}
-		err := json.Unmarshal([]byte(content), data)
-		if err != nil {
+		if err := json.Unmarshal([]byte(content), data); err != nil {
 			log.Println("No supported Zenon event. Skipping message!")
 			log.Println("Error: ", err)
 			continue
 		}
 
-		log.Println(data)
-
 		if data.MessageType == "project:new" {
-			log.Println("Handling new project")
+			log.Println("Handling new project event")
 			newProject := &zenon.NewProject{}
-			err := json.Unmarshal([]byte(content), newProject)
-			if err != nil {
+			if err := json.Unmarshal([]byte(content), newProject); err != nil {
 				log.Println("Could not cast content to project:new event")
 				continue
 			}
@@ -71,15 +64,14 @@ func main() {
 				newProject.Data.Name, newProject.Data.Znn, newProject.Data.Qsr, newProject.Data.Url,
 			)
 
-			twitter.Tweet(*twitterClient, tweetMessage)
+			if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
+				log.Printf("Error while sending Tweet: %e", err)
+			}
 		} else if data.MessageType == "phase:status-update" {
-			log.Println("Handling phase status update")
-
+			log.Println("Handling phase status update event")
 			statusUpdate := &zenon.ProjectStatusUpdated{}
-			err := json.Unmarshal([]byte(content), statusUpdate)
-
-			if err != nil {
-				log.Println("Could not cast content to project:new event")
+			if err := json.Unmarshal([]byte(content), statusUpdate); err != nil {
+				log.Println("Could not cast content to phase:status-update event")
 				continue
 			}
 
@@ -97,7 +89,9 @@ func main() {
 				project.Name, project.Votes.Yes, project.Votes.No, project.Url,
 			)
 
-			twitter.Tweet(*twitterClient, tweetMessage)
+			if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
+				log.Printf("Error while sending Tweet: %e", err)
+			}
 		}
 	}
 }

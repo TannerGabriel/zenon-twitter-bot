@@ -62,12 +62,13 @@ func CreateZmqClient(url string, filter string) (*zmq.Socket, error) {
 	// Set subscribe event
 	err = subscriber.SetSubscribe(filter)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return subscriber, nil
 }
 
+// CreateZenonZdk creates a Zenon zdk using the provided URL
 func CreateZenonZdk(url string) *zdk.Zdk {
 	rpc, err := client.NewClient(url)
 
