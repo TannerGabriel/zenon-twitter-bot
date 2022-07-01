@@ -6,6 +6,7 @@ import (
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/twitter"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/zenon"
 	"github.com/joho/godotenv"
+	"github.com/zenon-network/go-zenon/vm/embedded/definition"
 	"log"
 	"os"
 )
@@ -80,17 +81,20 @@ func main() {
 				log.Println("Error while fetching project: ", err)
 			}
 
-			tweetMessage := fmt.Sprintf(`Project has been accepted: %s
+			// Check if project has been completed
+			if statusUpdate.NewStatus == definition.CompletedStatus {
+				tweetMessage := fmt.Sprintf(`Project has been accepted: %s
 								
 								Votes:
 								Yes %d, No %d
 
 								%s`,
-				project.Name, project.Votes.Yes, project.Votes.No, project.Url,
-			)
+					project.Name, project.Votes.Yes, project.Votes.No, project.Url,
+				)
 
-			if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
-				log.Printf("Error while sending Tweet: %e", err)
+				if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
+					log.Printf("Error while sending Tweet: %e", err)
+				}
 			}
 		}
 	}

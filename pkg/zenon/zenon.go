@@ -43,8 +43,8 @@ type ProjectStatusUpdated struct {
 	MessageType string     `json:"type"`
 	Id          string     `json:"id"`
 	Pid         types.Hash `json:"pid"`
-	OldStatus   int        `json:"old"`
-	NewStatus   int        `json:"new"`
+	OldStatus   uint8      `json:"old"`
+	NewStatus   uint8      `json:"new"`
 }
 
 // CreateZmqClient creates a Zmq SUB and subscribes to the filtered topics
