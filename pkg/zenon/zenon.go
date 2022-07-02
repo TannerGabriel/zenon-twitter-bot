@@ -41,7 +41,7 @@ type NewProject struct {
 
 type ProjectStatusUpdated struct {
 	MessageType string     `json:"type"`
-	Id          string     `json:"id"`
+	Id          types.Hash `json:"id"`
 	Pid         types.Hash `json:"pid"`
 	OldStatus   uint8      `json:"old"`
 	NewStatus   uint8      `json:"new"`

@@ -56,13 +56,13 @@ func main() {
 				continue
 			}
 
-			tweetMessage := fmt.Sprintf(`New A-Z project: %s
+			tweetMessage := fmt.Sprintf(`New #AcceleratorZ project submission:  %s
 								
-								Requested funds:
-								%f ZNN %f QSR
-
+								Requested funds: %d $ZNN  %d $QSR
+								
+								Project URL:
 								%s`,
-				newProject.Data.Name, newProject.Data.Znn, newProject.Data.Qsr, newProject.Data.Url,
+				newProject.Data.Name, int(newProject.Data.Znn), int(newProject.Data.Qsr), newProject.Data.Url,
 			)
 
 			if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
@@ -83,13 +83,17 @@ func main() {
 
 			// Check if project has been completed
 			if statusUpdate.NewStatus == definition.CompletedStatus {
-				tweetMessage := fmt.Sprintf(`Project has been accepted: %s
+				tweetMessage := fmt.Sprintf(`%s has been accepted into #AcceleratorZ
 								
 								Votes:
-								Yes %d, No %d
+								Yes: %d 
+								No: %d
+
+								Funds Granted:
+								%d $ZNN & %d $QSR
 
 								%s`,
-					project.Name, project.Votes.Yes, project.Votes.No, project.Url,
+					project.Name, project.Votes.Yes, project.Votes.No, project.ZnnFundsNeeded, project.QsrFundsNeeded, project.Url,
 				)
 
 				if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
