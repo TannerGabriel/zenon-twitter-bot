@@ -1,6 +1,6 @@
 # Zenon Twitter bot
 
-Twitter bot that publishes updates to Zenon accelerator projects.
+Twitter bot that publishes updates to Zenon accelerator projects. For the data backend, see [zenon-az-service](https://github.com/dumeriz/zenon-az-service).
 
 ## Requirements
 
@@ -8,7 +8,7 @@ Requirements for running this repository:
 
 - Golang or Docker installation
 - Twitter API key and access token
-- Zenon events ZMQ backend
+- [Zenon-ZMQ-backend](https://github.com/dumeriz/zenon-az-service)
 
 ## Setup
 
