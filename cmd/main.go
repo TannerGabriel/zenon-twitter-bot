@@ -50,7 +50,7 @@ func main() {
 
 		if data.MessageType == "project:new" {
 			log.Println("Handling new project event")
-			newProject := &zenon.NewProject{}
+			newProject := &zenon.ProjectNew{}
 			if err := json.Unmarshal([]byte(content), newProject); err != nil {
 				log.Println("Could not cast content to project:new event")
 				continue
@@ -70,13 +70,46 @@ func main() {
 			}
 		} else if data.MessageType == "phase:status-update" {
 			log.Println("Handling phase status update event")
-			statusUpdate := &zenon.ProjectStatusUpdated{}
+			statusUpdate := &zenon.PhaseStatusUpdate{}
 			if err := json.Unmarshal([]byte(content), statusUpdate); err != nil {
 				log.Println("Could not cast content to phase:status-update event")
 				continue
 			}
 
-			project, err := zenonClient.Embedded.Accelerator.GetProjectById(statusUpdate.Pid)
+			phase, err := zenonClient.Embedded.Accelerator.GetPhaseById(statusUpdate.Id)
+			if err != nil {
+				log.Println("Error while fetching phase: ", err)
+			}
+
+			// Check if phase has been paid
+			if statusUpdate.NewStatus == definition.PaidStatus {
+				tweetMessage := fmt.Sprintf(`%s has been accepted into #AcceleratorZ
+								
+								Votes:
+								Yes: %d 
+								No: %d
+
+								Funds Granted:
+								%d $ZNN & %d $QSR
+
+								Phase URL:
+								%s`,
+					phase.Phase.Name, phase.Votes.Yes, phase.Votes.No, phase.Phase.ZnnFundsNeeded, phase.Phase.QsrFundsNeeded, phase.Phase.Url,
+				)
+
+				if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
+					log.Printf("Error while sending Tweet: %e", err)
+				}
+			}
+		} else if data.MessageType == "project:status-update" {
+			log.Println("Handling project status update event")
+			statusUpdate := &zenon.ProjectStatusUpdate{}
+			if err := json.Unmarshal([]byte(content), statusUpdate); err != nil {
+				log.Println("Could not cast content to project:status-update event")
+				continue
+			}
+
+			project, err := zenonClient.Embedded.Accelerator.GetProjectById(statusUpdate.Id)
 			if err != nil {
 				log.Println("Error while fetching project: ", err)
 			}
