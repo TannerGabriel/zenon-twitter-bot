@@ -3,6 +3,7 @@ package zenon
 import (
 	"fmt"
 	"github.com/zenon-wiki/go-zdk/zdk"
+	"math/big"
 )
 
 const (
@@ -11,6 +12,10 @@ const (
 	Closed    = 3
 	Completed = 4
 )
+
+func convertFundValues(value big.Int) string {
+	return new(big.Int).Div(&value, big.NewInt(100000000)).String()
+}
 
 // HandleNewProject creates the Tweet for the project:new event
 func HandleNewProject(project ProjectNew) string {
@@ -42,10 +47,10 @@ func HandleProjectStatusUpdate(statusUpdate ProjectStatusUpdate, zenon *zdk.Zdk)
 								No: %d
 
 								Funds Granted:
-								%d $ZNN & %d $QSR
+								%s $ZNN & %s $QSR
 
 								%s`,
-			project.Name, project.Votes.Yes, project.Votes.No, project.ZnnFundsNeeded, project.QsrFundsNeeded, project.Url,
+			project.Name, project.Votes.Yes, project.Votes.No, convertFundValues(*project.ZnnFundsNeeded), convertFundValues(*project.QsrFundsNeeded), project.Url,
 		)
 
 		return tweetMessage, nil
@@ -71,11 +76,11 @@ func HandlePhaseStatusUpdate(statusUpdate PhaseStatusUpdate, zenon *zdk.Zdk) (st
 		tweetMessage := fmt.Sprintf(`%s has been paid for %s
 
 								Funds Granted:
-								%d $ZNN & %d $QSR
+								%s $ZNN & %s $QSR
 
 								Phase URL:
 								%s`,
-			phase.Phase.Name, project.Name, phase.Phase.ZnnFundsNeeded, phase.Phase.QsrFundsNeeded, phase.Phase.Url,
+			phase.Phase.Name, project.Name, convertFundValues(*phase.Phase.ZnnFundsNeeded), convertFundValues(*phase.Phase.QsrFundsNeeded), phase.Phase.Url,
 		)
 
 		return tweetMessage, err
