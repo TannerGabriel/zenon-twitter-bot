@@ -2,11 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/twitter"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/zenon"
 	"github.com/joho/godotenv"
-	"github.com/zenon-network/go-zenon/vm/embedded/definition"
 	"log"
 	"os"
 )
@@ -48,6 +46,8 @@ func main() {
 			continue
 		}
 
+		var tweetMessage string
+
 		if data.MessageType == "project:new" {
 			log.Println("Handling new project event")
 			newProject := &zenon.ProjectNew{}
@@ -56,18 +56,7 @@ func main() {
 				continue
 			}
 
-			tweetMessage := fmt.Sprintf(`New #AcceleratorZ project submission:  %s
-								
-								Requested funds: %d $ZNN  %d $QSR
-								
-								Project URL:
-								%s`,
-				newProject.Data.Name, int(newProject.Data.Znn), int(newProject.Data.Qsr), newProject.Data.Url,
-			)
-
-			if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
-				log.Printf("Error while sending Tweet: %e", err)
-			}
+			tweetMessage = zenon.HandleNewProject(*newProject)
 		} else if data.MessageType == "phase:status-update" {
 			log.Println("Handling phase status update event")
 			statusUpdate := &zenon.PhaseStatusUpdate{}
@@ -76,30 +65,10 @@ func main() {
 				continue
 			}
 
-			phase, err := zenonClient.Embedded.Accelerator.GetPhaseById(statusUpdate.Id)
+			tweetMessage, err = zenon.HandlePhaseStatusUpdate(*statusUpdate, zenonClient)
 			if err != nil {
-				log.Println("Error while fetching phase: ", err)
-			}
-
-			// Check if phase has been paid
-			if statusUpdate.NewStatus == definition.PaidStatus {
-				tweetMessage := fmt.Sprintf(`%s has been accepted into #AcceleratorZ
-								
-								Votes:
-								Yes: %d 
-								No: %d
-
-								Funds Granted:
-								%d $ZNN & %d $QSR
-
-								Phase URL:
-								%s`,
-					phase.Phase.Name, phase.Votes.Yes, phase.Votes.No, phase.Phase.ZnnFundsNeeded, phase.Phase.QsrFundsNeeded, phase.Phase.Url,
-				)
-
-				if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
-					log.Printf("Error while sending Tweet: %e", err)
-				}
+				log.Printf("Error while handling phase:status-update event: %e", err)
+				continue
 			}
 		} else if data.MessageType == "project:status-update" {
 			log.Println("Handling project status update event")
@@ -109,29 +78,16 @@ func main() {
 				continue
 			}
 
-			project, err := zenonClient.Embedded.Accelerator.GetProjectById(statusUpdate.Id)
+			tweetMessage, err = zenon.HandleProjectStatusUpdate(*statusUpdate, zenonClient)
 			if err != nil {
-				log.Println("Error while fetching project: ", err)
+				log.Printf("Error while handling project:status-update event: %e", err)
+				continue
 			}
+		}
 
-			// Check if project has been completed
-			if statusUpdate.NewStatus == definition.CompletedStatus {
-				tweetMessage := fmt.Sprintf(`%s has been accepted into #AcceleratorZ
-								
-								Votes:
-								Yes: %d 
-								No: %d
-
-								Funds Granted:
-								%d $ZNN & %d $QSR
-
-								%s`,
-					project.Name, project.Votes.Yes, project.Votes.No, project.ZnnFundsNeeded, project.QsrFundsNeeded, project.Url,
-				)
-
-				if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
-					log.Printf("Error while sending Tweet: %e", err)
-				}
+		if tweetMessage != "" {
+			if err := twitter.Tweet(*twitterClient, tweetMessage); err != nil {
+				log.Printf("Error while sending Tweet: %e", err)
 			}
 		}
 	}
