@@ -5,6 +5,7 @@ import (
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/twitter"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/zenon"
 	"github.com/joho/godotenv"
+	czmq "gopkg.in/zeromq/goczmq.v4"
 	"log"
 	"os"
 )
@@ -28,8 +29,8 @@ func main() {
 	}
 
 	zenonClient := zenon.CreateZenonZdk(os.Getenv("ZENON_URL"))
-	subscriber, err := zenon.CreateZmqClient(os.Getenv("ZMQ_URL"), "")
-	defer subscriber.Close()
+	subscriber, err := czmq.NewSub(os.Getenv("ZMQ_URL"), "")
+	defer subscriber.Destroy()
 	if err != nil {
 		log.Fatalf("Error creating zmq client: %e", err)
 	}
@@ -37,10 +38,15 @@ func main() {
 	// Read the data from the subscription
 	for {
 		//  Read message contents
-		content, _ := subscriber.Recv(0)
+		content, _, err := subscriber.RecvFrame()
+
+		if err != nil {
+			log.Printf("Error while receiving frame: %e", err)
+			continue
+		}
 
 		data := &zenon.Event{}
-		if err := json.Unmarshal([]byte(content), data); err != nil {
+		if err := json.Unmarshal(content, data); err != nil {
 			log.Println("No supported Zenon event. Skipping message!")
 			log.Println("Error: ", err)
 			continue
@@ -51,7 +57,7 @@ func main() {
 		if data.MessageType == "project:new" {
 			log.Println("Handling new project event")
 			newProject := &zenon.ProjectNew{}
-			if err := json.Unmarshal([]byte(content), newProject); err != nil {
+			if err := json.Unmarshal(content, newProject); err != nil {
 				log.Println("Could not cast content to project:new event")
 				continue
 			}
@@ -73,7 +79,7 @@ func main() {
 		} else if data.MessageType == "project:status-update" {
 			log.Println("Handling project status update event")
 			statusUpdate := &zenon.ProjectStatusUpdate{}
-			if err := json.Unmarshal([]byte(content), statusUpdate); err != nil {
+			if err := json.Unmarshal(content, statusUpdate); err != nil {
 				log.Println("Could not cast content to project:status-update event")
 				continue
 			}
