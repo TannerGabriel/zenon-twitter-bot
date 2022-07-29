@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/twitter"
 	"github.com/TannerGabriel/zenon-twitter-bot/pkg/zenon"
+	"github.com/go-zeromq/zmq4"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -28,19 +30,31 @@ func main() {
 	}
 
 	zenonClient := zenon.CreateZenonZdk(os.Getenv("ZENON_URL"))
-	subscriber, err := zenon.CreateZmqClient(os.Getenv("ZMQ_URL"), "")
+
+	//  Prepare our subscriber
+	subscriber := zmq4.NewSub(context.Background())
 	defer subscriber.Close()
+
+	err = subscriber.Dial("tcp://localhost:6666")
 	if err != nil {
-		log.Fatalf("Error creating zmq client: %e", err)
+		log.Fatalf("could not dial: %v", err)
+	}
+
+	err = subscriber.SetOption(zmq4.OptionSubscribe, "")
+	if err != nil {
+		log.Fatalf("could not subscribe: %v", err)
 	}
 
 	// Read the data from the subscription
 	for {
 		//  Read message contents
-		content, _ := subscriber.Recv(0)
+		content, err := subscriber.Recv()
+		if err != nil {
+			log.Fatalf("could not receive message: %v", err)
+		}
 
 		data := &zenon.Event{}
-		if err := json.Unmarshal([]byte(content), data); err != nil {
+		if err := json.Unmarshal(content.Frames[0], data); err != nil {
 			log.Println("No supported Zenon event. Skipping message!")
 			log.Println("Error: ", err)
 			continue
@@ -51,7 +65,7 @@ func main() {
 		if data.MessageType == "project:new" {
 			log.Println("Handling new project event")
 			newProject := &zenon.ProjectNew{}
-			if err := json.Unmarshal([]byte(content), newProject); err != nil {
+			if err := json.Unmarshal(content.Frames[0], newProject); err != nil {
 				log.Println("Could not cast content to project:new event")
 				continue
 			}
@@ -60,7 +74,7 @@ func main() {
 		} else if data.MessageType == "phase:status-update" {
 			log.Println("Handling phase status update event")
 			statusUpdate := &zenon.PhaseStatusUpdate{}
-			if err := json.Unmarshal([]byte(content), statusUpdate); err != nil {
+			if err := json.Unmarshal(content.Frames[0], statusUpdate); err != nil {
 				log.Println("Could not cast content to phase:status-update event")
 				continue
 			}
@@ -73,7 +87,7 @@ func main() {
 		} else if data.MessageType == "project:status-update" {
 			log.Println("Handling project status update event")
 			statusUpdate := &zenon.ProjectStatusUpdate{}
-			if err := json.Unmarshal([]byte(content), statusUpdate); err != nil {
+			if err := json.Unmarshal(content.Frames[0], statusUpdate); err != nil {
 				log.Println("Could not cast content to project:status-update event")
 				continue
 			}
