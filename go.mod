@@ -5,8 +5,8 @@ go 1.17
 require (
 	github.com/dghubble/go-twitter v0.0.0-20220608135633-47eb18e5aab5
 	github.com/dghubble/oauth1 v0.7.1
+	github.com/go-zeromq/zmq4 v0.15.0
 	github.com/joho/godotenv v1.4.0
-	github.com/pebbe/zmq4 v1.2.9
 	github.com/zenon-network/go-zenon v0.0.4-alphanet
 	github.com/zenon-wiki/go-zdk v0.0.0-20220522002455-62268d3c971d
 )
@@ -21,7 +21,6 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/go-zeromq/goczmq/v4 v4.2.2 // indirect
-	github.com/go-zeromq/zmq4 v0.15.0 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
