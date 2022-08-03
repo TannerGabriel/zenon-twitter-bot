@@ -35,7 +35,7 @@ func main() {
 	subscriber := zmq4.NewSub(context.Background())
 	defer subscriber.Close()
 
-	err = subscriber.Dial("tcp://localhost:6666")
+	err = subscriber.Dial(os.Getenv("ZMQ_URL"))
 	if err != nil {
 		log.Fatalf("could not dial: %v", err)
 	}
@@ -44,6 +44,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not subscribe: %v", err)
 	}
+
+	log.Println("Twitter bot started! Waiting for messages.")
 
 	// Read the data from the subscription
 	for {
